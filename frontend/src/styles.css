@@ -1,0 +1,14 @@
+.v-application {
+  background-color: var(--v-theme-background) !important;
+
+  /* Pont vers des variables génériques */
+  --primary: var(--v-theme-primary);
+  --secondary: var(--v-theme-secondary);
+  --surface: var(--v-theme-surface);
+  --background: var(--v-theme-background);
+  --on-background: var(--v-theme-on-background, #111);
+  --on-surface: var(--v-theme-on-surface, #dc8f8f);
+
+  /* Couleur de texte par défaut = on-background */
+  color: var(--on-background);
+}
