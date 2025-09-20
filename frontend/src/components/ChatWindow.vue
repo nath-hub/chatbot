@@ -8,7 +8,7 @@
         </div>
 
         <div class="header-text">
-          <h1>Chat juridique IA</h1>
+          <h2>Legal Chat IA</h2>
           <p>Assistante juridique intelligente</p>
         </div>
       </div>
@@ -81,27 +81,30 @@ onMounted(() => {
   color: var(--v-theme-on-background);
 }
 .messages {
+  margin-left: 260px;
+  margin-right: 260px;
   flex: 1;
-  padding: 16px;
-  overflow: none;
-  border-top: 1px solid #3a2828;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  /* The container reads theme colors */
+  padding: 26px;
+  overflow: auto;
+  /* border: 1px solid #3a2828; */
+  box-shadow: 0 3px 3px rgba(0, 0, 0, 0.15);
+   
   color: var(--v-theme-on-surface);
-  background-color: var(--v-theme-surface);
+  /* background-color: var(--v-theme-surface); */
   background-image: linear-gradient(
     to left,
     var(--v-theme-background),
     var(--v-theme-secondary)
   );
-  /* background-image: linear-gradient(to left, #f5dbfc, #e7e7e7); */
-} /* pas de scrollbar global si tu veux */
+ 
+} 
 
 .header {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px;
+  padding-left: 10px;
+  padding-top: 10px;
   border-bottom: 1px solid #eee;
   color: var(--v-theme-on-background);
 
@@ -110,8 +113,8 @@ onMounted(() => {
   transition: all 0.8s ease-out;
 }
 .header-logo .logo-img {
-  width: 100px;
-  height: 100px;
+  width: 70px;
+  height: 70px;
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid #eaeaecf5;

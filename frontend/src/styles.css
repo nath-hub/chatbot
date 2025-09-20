@@ -8,6 +8,9 @@
   --background: var(--v-theme-background);
   --on-background: var(--v-theme-on-background, #111);
   --on-surface: var(--v-theme-on-surface, #dc8f8f);
+  --fade: var(--v-theme-fade);
+  --black: var(--v-theme-black);
+  --bg-msg: var(--v-theme-bg-msg);
 
   /* Couleur de texte par défaut = on-background */
   color: var(--on-background);

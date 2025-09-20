@@ -20,6 +20,7 @@ export type ChatMessage = {
   role: "user" | "assistant" | "system";
   content: string;
   id?: string;
+  timestamp?: number; // epoch ms of when the message was created
 };
 
 export async function sendChat(messages: ChatMessage[]) {

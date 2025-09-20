@@ -26,27 +26,34 @@ const vuetify = createVuetify({
       light: {
         dark: false,
         colors: {
-          background: "hsl(283, 77.80%, 98.20%)",
-          surface: "#ffffff",
+          background: "hsl(0, 0.00%, 91.80%)",
+          surface: "hsl(0, 4.30%, 95.50%)",
           primary: "#673AB7", // violet
           secondary: "#e7e7e7",
           error: "#f44336",
           "on-background": "#1f1f1f",
           "on-surface": "#1f1f1f",
-
+          fade: "hsl(0, 0.00%, 42.00%)",
+          black: "hsla(302, 78.40%, 7.30%, 0.98)",
+          "color-text": "hsla(0, 100.00%, 98.40%, 0.98)",
+          "bg-msg": "hsl(268, 100.00%, 29.60%)",
         },
       },
       dark: {
         dark: true,
         colors: {
           background: "hsl(0, 0.00%, 20.40%)",
-          surface: "hsl(132, 83.50%, 38.00%)", //pour le menu
-          primary: "hsl(0, 86.30%, 34.30%)", // violet clair
-          secondary: "hsl(0, 81.20%, 39.60%)",
+          surface: "hsl(0, 0.00%, 20.40%)", //pour le menu
+          primary: "hsl(268, 100.00%, 29.60%)", // violet clair
+          secondary: "hsl(0, 0.00%, 24.30%)",
           error: "hsl(0, 0.00%, 98.40%)",
           "on-background": "hsl(0, 0.00%, 98.40%)",
           "on-surface": "hsl(0, 0.00%, 98.40%)",
-        },
+          fade: "hsl(280, 3.30%, 82.20%)",
+          black: "hsla(302, 78.40%, 7.30%, 0.98)",
+          "color-text": "hsla(0, 0.00%, 96.90%, 0.98)",
+          "bg-msg": "hsl(268, 100.00%, 29.60%)",
+                      },
       },
     },
   },
