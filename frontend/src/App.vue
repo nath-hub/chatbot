@@ -170,6 +170,10 @@
       </v-navigation-drawer>
 
       <v-main class="bg-background text-on-background overflow-y-auto">
+
+ 
+
+
         <!-- Contenu principal -->
         <router-view />
       </v-main>
@@ -178,11 +182,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted  } from "vue";
 import { useRoute } from "vue-router";
 import { useTheme } from "vuetify";
-import { useChatStore } from "./stores/chat";
-import girl from "./assets/girl.jpg";
+import { useChatStore } from "./stores/chat"; 
+import girl from "./assets/girl.jpg"; 
 
 const drawer = ref(true);
 const rail = ref(true);
@@ -206,6 +210,7 @@ function newConv() {
 // Hide navigation drawer on Landing route
 const route = useRoute();
 const hideDrawer = computed(() => route.name === "Landing");
+
 </script>
 
 <style>

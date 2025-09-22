@@ -1,35 +1,80 @@
 <template>
   <div class="app-shell">
+    <v-app-bar :elevation="2" style="height: 80px">
+      <template v-slot:prepend>
+        <!-- <v-app-bar-nav-icon></v-app-bar-nav-icon> -->
+      </template>
+
+      <v-app-bar-title class="d-flex align-center">
+        <transition name="fade-slide" appear>
+          <div class="header">
+            <div class="header-logo">
+              <img src="../assets/logo.jpg" alt="Logo" class="logo-img" />
+            </div>
+            <div class="header-text">
+              <h3>Legal Chat IA</h3>
+              <p>Assistante juridique intelligente</p>
+            </div>
+          </div>
+        </transition>
+      </v-app-bar-title>
+
+      <template v-slot:append>
+        <v-btn
+          text="Login"
+          variant="text"
+          :to="{ path: '/login' }"
+          style="
+            width: 80px;
+            height: 40px;
+            margin-left: 30px;
+            margin-top: 20px;
+            text-transform: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgb(var(--v-theme-color-text));
+            background-color: rgb(var(--v-theme-primary));
+          "
+        />
+        <v-btn icon="mdi-magnify" class="ml-12 mt-6"></v-btn>
+
+        <v-menu>
+          <template v-slot:activator="{ props }">
+            <v-btn  class="ml-12 mt-6" icon="mdi-dots-vertical" v-bind="props"></v-btn>
+          </template>
+
+          <v-list>
+            <v-list-item @click="goProfile">
+              <v-list-item-title>Profil</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="goSettings">
+              <v-list-item-title>Paramètres</v-list-item-title>
+            </v-list-item>
+            <v-list-item @click="logout">
+              <v-list-item-title>Déconnexion</v-list-item-title>
+            </v-list-item>
+          </v-list>
+        </v-menu>
+      </template>
+    </v-app-bar>
+
     <!-- <Sidebar /> -->
     <main class="chat-area">
-      <div class="header" ref="headerRef" :class="{ animate: isVisible }">
-        <div class="header-logo">
-          <img src="../assets/logo.jpg" alt="Logo" class="logo-img" />
-        </div>
-
-        <div class="header-text">
-          <h2>Legal Chat IA</h2>
-          <p>Assistante juridique intelligente</p>
-        </div>
-      </div>
-
       <div class="messages" ref="msgs">
         <MessageItem v-for="(m, i) in store.messages" :key="i" :message="m" />
       </div>
 
       <ChatInput />
     </main>
-    <!-- <myContentDrawer  /> -->
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue";
-// import Sidebar from "./Sidebar.vue";
+import { onMounted, ref, watch } from "vue"; 
 import MessageItem from "./MessageItem.vue";
 import ChatInput from "./ChatInput.vue";
-import { useChatStore } from "../stores/chat";
-import myContentDrawer from "./Drawer.vue";
+import { useChatStore } from "../stores/chat"; 
 
 const headerRef = ref<HTMLElement | null>(null);
 const isVisible = ref(false);
@@ -69,7 +114,7 @@ onMounted(() => {
 <style scoped>
 .app-shell {
   display: flex;
-  height: 100vh;
+  height: 90vh;
   width: 100%;
 }
 .chat-area {
@@ -88,7 +133,7 @@ onMounted(() => {
   overflow: auto;
   /* border: 1px solid #3a2828; */
   box-shadow: 0 3px 3px rgba(0, 0, 0, 0.15);
-   
+
   color: var(--v-theme-on-surface);
   /* background-color: var(--v-theme-surface); */
   background-image: linear-gradient(
@@ -96,8 +141,7 @@ onMounted(() => {
     var(--v-theme-background),
     var(--v-theme-secondary)
   );
- 
-} 
+}
 
 .header {
   display: flex;
@@ -108,9 +152,9 @@ onMounted(() => {
   border-bottom: 1px solid #eee;
   color: var(--v-theme-on-background);
 
-  opacity: 0;
+  /* opacity: 0;
   transform: translateY(70px);
-  transition: all 0.8s ease-out;
+  transition: all 0.8s ease-out; */
 }
 .header-logo .logo-img {
   width: 70px;
@@ -124,5 +168,29 @@ onMounted(() => {
 .header.animate {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Transition fade-slide */
+.fade-slide-enter-active {
+  transition: all 0.8s ease-out;
+}
+.fade-slide-leave-active {
+  transition: all 0.5s ease-in;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(70px);
+}
+.fade-slide-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(70px);
 }
 </style>
