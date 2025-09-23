@@ -1,16 +1,18 @@
-require("dotenv").config();
-const express = require("express");
-const axios = require("axios");
-const cors = require("cors");
-const { v4: uuidv4 } = require('uuid'); 
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+dotenv.config();
 
-const mysql = require("mysql2/promise");
+// require("dotenv").config();
+import express from "express";
+import axios from "axios";
+import cors from "cors";
+import { v4 as uuidv4 } from "uuid";
+
+import mysql from "mysql2/promise";
 
 const app = express();
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-const path = require("path");
-const fs = require("fs");
+import jwt from "jsonwebtoken";
+import path from "path";
 
 const dbConfig = {
   host: process.env.DB_HOST, // L'hôte de la base de données
@@ -19,7 +21,7 @@ const dbConfig = {
   database: process.env.DB_DATABASE, // Nom de votre base de données
 };
 
-const JWT_SECRET = "votre_secret_jwt_super_securise";
+const JWT_SECRET = "YOUR_SECRET_KEY";
 
 app.use(cors());
 app.use(express.json());
@@ -30,15 +32,58 @@ app.use(express.static("public"));
 // Base de données simple en mémoire (remplacez par une vraie BDD)
 let users = [];
 
+// Fonction pour générer un OTP à 6 chiffres
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_KEY) {
   console.error("Missing OPENAI_API_KEY in env");
   process.exit(1);
 }
 
+console.log(process.env.USERNAME_GMAIL);
+console.log(process.env.PASSWORD);
+
+// Configurer nodemailer (exemple avec Gmail)
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.USERNAME_GMAIL,
+    pass: process.env.PASSWORD, // mot de passe d’application Gmail
+  },
+});
+
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]; // Récupérer le token depuis les en-têtes
+
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Token manquant" });
+  }
+
+  jwt.verify(token, "YOUR_SECRET_KEY", (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .json({ success: false, message: "Token invalide" });
+    }
+
+    req.user = decoded; // Assurez-vous que les informations de l'utilisateur sont attachées ici
+    next();
+  });
+};
+
 // Route pour servir la page principale
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
+app.get("/api/me", authMiddleware, (req, res) => {
+  res.json({
+    success: true,
+    user: {
+      id: req.user.id,
+      username: req.user.username,
+      email: req.user.email,
+    },
+  });
 });
 
 // Route d'inscription
@@ -46,56 +91,62 @@ app.post("/api/register", async (req, res) => {
   const connection = await mysql.createConnection(dbConfig);
 
   try {
-     const userId = uuidv4();
-    const { username, email, password, confirmPassword } = req.body;
+    const userId = uuidv4();
+    const { username, email } = req.body;
 
     // Validation
-    if (!username || !email || !password || !confirmPassword) {
+    if (!username || !email) {
       return res.status(400).json({
         success: false,
         message: "Tous les champs sont requis",
       });
     }
 
-    if (password !== confirmPassword) {
-      return res.status(400).json({
-        success: false,
-        message: "Les mots de passe ne correspondent pas",
-      });
-    }
-
-    if (password.length < 6) {
-      return res.status(400).json({
-        success: false,
-        message: "Le mot de passe doit contenir au moins 6 caractères",
-      });
-    }
- 
-
     // Vérifier si l'utilisateur existe déjà
     const [existingUsers] = await connection.execute(
-      "SELECT * FROM users WHERE email = ? OR username = ?",
-      [email, username]
+      "SELECT * FROM users WHERE email = ?",
+      [email]
     );
+
+    let result;
+    const otp = generateOTP();
 
     if (existingUsers.length > 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Un utilisateur avec ce nom ou cet email existe déjà",
-      });
+      // Mettre à jour OTP si utilisateur existe déjà
+      await connection.execute(
+        "UPDATE users SET otp = ?, otp_expiry = ? WHERE email = ?",
+        [otp, new Date(Date.now() + 10 * 60000), email] // OTP valide 10 min
+      );
+
+      result = { insertId: existingUsers[0].id };
+    } else {
+      // Créer l'utilisateur
+      const [insertResult] = await connection.execute(
+        "INSERT INTO users (id, username, email, otp, otp_expiry, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          userId,
+          username,
+          email,
+          otp,
+          new Date(Date.now() + 10 * 60000),
+          0,
+          new Date(),
+          new Date(),
+        ]
+      );
+      result = insertResult;
     }
 
-    // Hasher le mot de passe
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Créer l'utilisateur
-    const [result] = await connection.execute(
-      "INSERT INTO users (id, username, email, password, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-      [userId, username, email, hashedPassword, new Date(), new Date()]
-    );
+    // Envoyer OTP par email
+    await transporter.sendMail({
+      from: "no_reply@gmail.com",
+      to: email,
+      subject: "Votre code de validation",
+      html: getEmailTemplate(username, otp),
+    });
 
     // Générer le token JWT
-    const token = jwt.sign({ userId: result.insertId, username }, JWT_SECRET, {
+    const token = jwt.sign({ userId: result.insertId, username: username, email: email }, JWT_SECRET, {
       expiresIn: "24h",
     });
 
@@ -118,70 +169,67 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+app.post("/api/verify", async (req, res) => {
+  const connection = await mysql.createConnection(dbConfig);
 
-// Route de connexion
-app.post('/api/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
+  try {
+    const { email, otp } = req.body;
 
-        // Validation
-        if (!email || !password) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email et mot de passe requis' 
-            });
-        }
-
-        // Connexion à la base de données
-        const connection = await mysql.createConnection(dbConfig);
-
-        // Trouver l'utilisateur
-        const [users] = await connection.execute('SELECT * FROM users WHERE email = ?', [email]);
-        const user = users[0];
-
-        if (!user) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email ou mot de passe incorrect' 
-            });
-        }
-
-        // Vérifier le mot de passe
-        const isValidPassword = await bcrypt.compare(password, user.password);
-        if (!isValidPassword) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Email ou mot de passe incorrect' 
-            });
-        }
-
-        // Générer le token JWT
-        const token = jwt.sign(
-            { userId: user.id, username: user.username },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
-
-        res.json({
-            success: true,
-            message: 'Connexion réussie',
-            token,
-            user: {
-                id: user.id,
-                username: user.username,
-                email: user.email
-            }
-        });
-
-    } catch (error) {
-        console.error('Erreur lors de la connexion:', error);
-        res.status(500).json({ 
-            success: false, 
-            message: 'Erreur serveur' 
-        });
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        message: "Email et code requis",
+      });
     }
-});
 
+    const [users] = await connection.execute(
+      "SELECT * FROM users WHERE email = ? AND otp = ?",
+      [email, otp]
+    );
+
+    if (users.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Code invalide",
+      });
+    }
+
+    const user = users[0];
+
+    // Vérifier expiration
+    if (new Date() > new Date(user.otp_expiry)) {
+      return res.status(400).json({
+        success: false,
+        message: "Code expiré",
+      });
+    }
+
+    // Activer compte
+    await connection.execute(
+      "UPDATE users SET is_active = 1, otp = NULL, otp_expiry = NULL, email_verified_at = ? WHERE email = ?",
+      [new Date(), email]
+    );
+
+    // Générer un JWT (exp 24h)
+    const token = jwt.sign({ id: user.id, username: user.username, email: user.email }, JWT_SECRET, {
+      expiresIn: "24h",
+    });
+
+    res.json({
+      success: true,
+      message: "Compte activé",
+      token,
+    });
+  } catch (error) {
+    console.error("Erreur verify:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+    });
+  } finally {
+    connection.end();
+  }
+});
 
 app.post("/api/chat", async (req, res) => {
   try {
@@ -226,6 +274,74 @@ app.post("/api/chat", async (req, res) => {
     });
   }
 });
+
+function getEmailTemplate(username, otp) {
+  return `
+  <!DOCTYPE html>
+  <html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Code d'authentification</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f9f6fb;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 500px;
+        margin: 30px auto;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        padding: 30px;
+      }
+      .header {
+        text-align: center;
+        color: #6c2399ff;
+      }
+      .otp {
+        font-size: 32px;
+        font-weight: bold;
+        color: #6c2399ff;
+        text-align: center;
+        margin: 20px 0;
+        letter-spacing: 4px;
+      }
+      .content {
+        color: #333;
+        font-size: 16px;
+        line-height: 1.5;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        color: #777;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2 class="header">🔒 Authentification</h2>
+      <p class="content">Bonjour <strong>${username}</strong>,</p>
+      <p class="content">Voici votre code d'authentification :</p>
+      <div class="otp">${otp}</div>
+      <p class="content">
+        Vous devez copier ce code pour le saisir sur la plateforme et continuer l'utilisation de l'application.
+      </p>
+      <p class="content">
+        Ce code est valable <strong>10 minutes</strong>.
+      </p>
+      <div class="footer">
+        &copy; ${new Date().getFullYear()} Chat - Tous droits réservés.
+      </div>
+    </div>
+  </body>
+  </html>
+  `;
+}
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server listening on ${port}`));

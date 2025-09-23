@@ -20,7 +20,7 @@
       </v-app-bar-title>
 
       <template v-slot:append>
-        <v-btn
+        <!-- <v-btn
           text="Login"
           variant="text"
           :to="{ path: '/login' }"
@@ -36,7 +36,7 @@
             color: rgb(var(--v-theme-color-text));
             background-color: rgb(var(--v-theme-primary));
           "
-        />
+        /> -->
         <v-btn icon="mdi-magnify" class="ml-12 mt-6"></v-btn>
 
         <v-menu>

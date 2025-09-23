@@ -28,7 +28,7 @@ const vuetify = createVuetify({
         colors: {
           background: "hsl(0, 0.00%, 91.80%)",
           surface: "hsl(0, 4.30%, 95.50%)",
-          primary: "#673AB7", // violet
+          primary: "#6c2399ff", // violet
           secondary: "#e7e7e7",
           error: "#f44336",
           "on-background": "#1f1f1f",

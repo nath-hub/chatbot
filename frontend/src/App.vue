@@ -16,8 +16,8 @@
           <v-list>
             <v-list-item 
               :prepend-avatar="girlAvatar"
-              title="John Leider"
-              subtitle="example@gmailcom"
+              :title="user.username || 'Invité'"
+              :subtitle="user.email || ''"
                
             :style="rail
               ? 'min-width: 32px;  background-color: rgb(var(--v-theme-background)); height: 45px;'
@@ -187,13 +187,15 @@ import { useRoute } from "vue-router";
 import { useTheme } from "vuetify";
 import { useChatStore } from "./stores/chat"; 
 import girl from "./assets/girl.jpg"; 
+import axios from "axios";
 
 const drawer = ref(true);
 const rail = ref(true);
 const store = useChatStore();
 const sys = ref(store.messages[0]?.content || "");
 
-const girlAvatar = girl;
+const girlAvatar = girl; 
+const user = ref<{username?: string; email?: string}>({});
 
 // Theme toggle with Vuetify 3
 const theme = useTheme();
@@ -202,14 +204,31 @@ function toggleTheme() {
   theme.global.name.value = isDark.value ? "light" : "dark";
 }
 
-function newConv() {
-  // store.clearMessages();
-  store.addMessage({ role: "system", content: sys.value });
-}
+// Récupération du profil user avec le token
+onMounted(async () => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    try {
+      const res = await axios.get("http://localhost:3000/api/me", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      if (res.data.success) {
+        user.value = res.data.user;
+      }
+    } catch (err) {
+      console.error("Erreur récupération user:", err);
+    }
+  }
+});
+
+
+
 
 // Hide navigation drawer on Landing route
 const route = useRoute();
-const hideDrawer = computed(() => route.name === "Landing");
+const hideDrawer = computed(() => route.name === "Landing"|| route.name === "Verify"|| route.name === "Login");
 
 </script>
 
