@@ -4,7 +4,7 @@ import About from "../pages/About.vue";
 import Landing from "../pages/Landing.vue";
 import Login from "../components/Login.vue"
 import Verify from "../components/Verify.vue";
-import Profil from "../components/profil.vue";
+import Profil from "../components/Profil.vue";
 import Abonnement from "../components/Abonnement.vue";
 
 const routes = [
