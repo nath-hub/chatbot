@@ -4,6 +4,8 @@ import About from "../pages/About.vue";
 import Landing from "../pages/Landing.vue";
 import Login from "../components/Login.vue"
 import Verify from "../components/Verify.vue";
+import Profil from "../components/profil.vue";
+import Abonnement from "../components/Abonnement.vue";
 
 const routes = [
   { path: "/", name: "Landing", component: Landing },
@@ -12,6 +14,8 @@ const routes = [
   { path: "/about", name: "About", component: About },
   { path: "/login", name: "Login", component: Login }, 
   { path: "/verify", name: "Verify", component: Verify },
+  { path: "/profil", name: "Profil", component: Profil },
+  { path: "/abonnement", name: "Abonnement", component: Abonnement },
 ];
 
 export default createRouter({

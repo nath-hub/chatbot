@@ -4,26 +4,36 @@
     <div class="animated-fade-in">
       <div class="header-logo">
         <img src="../assets/logo.jpg" alt="Logo" class="logo-img" />
-      </div> 
+      </div>
       <h1 class="text-h4 mb-4 mt-4">Legal Chat IA</h1>
       <p style="font-size: 22px; color: rgb(var(--v-theme-fade))">
         Votre assistant juridique intelligent pour toutes vos questions de droit
         français
       </p>
     </div>
- 
-    <div
-      class="d-flex justify-center py-12 px-10"
-      style="gap: 40px;"
-    >
+
+    <div class="d-flex justify-center py-12 px-10" style="gap: 40px">
       <div
         v-for="(card, index) in cards"
         :key="index"
         class="text-center feature-card"
-        style="flex: 0 0 auto; width: 356px; background: rgb(var(--v-theme-surface)); border: 2px solid rgb(var(--v-theme-secondary)); border-radius: 12px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06); padding: 14px;"
+        style="
+          flex: 0 0 auto;
+          width: 356px;
+          background: rgb(var(--v-theme-surface));
+          border: 2px solid rgb(var(--v-theme-secondary));
+          border-radius: 12px;
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+          padding: 14px;
+        "
       >
         <div class="d-flex justify-center mb-4" style="padding: 10px">
-          <v-icon :size="40" :icon="card.icon" :color="card.vColor" :title="card.title"/>
+          <v-icon
+            :size="40"
+            :icon="card.icon"
+            :color="card.vColor"
+            :title="card.title"
+          />
         </div>
         <h2 class="font-weight-medium mb-4">{{ card.title }}</h2>
         <div class="text-body-1" style="color: rgb(var(--v-theme-fade))">
@@ -33,8 +43,18 @@
     </div>
 
     <!-- Large card below the row -->
-    <v-card class="mx-auto text-white text-center" color="surface" max-width="800" height="300" style="border: 2px solid rgb(var(--v-theme-secondary)); border-radius: 12px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);">
-      <v-card-text class="py-6 ml-4 mr-4" >
+    <v-card
+      class="mx-auto text-white text-center"
+      color="surface"
+      max-width="800"
+      height="300"
+      style="
+        border: 2px solid rgb(var(--v-theme-secondary));
+        border-radius: 12px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+      "
+    >
+      <v-card-text class="py-6 ml-4 mr-4">
         <div class="text-h5 mb-4" style="color: rgb(var(--v-theme-black))">
           Commencez dès maintenant
         </div>
@@ -45,55 +65,109 @@
         </div>
       </v-card-text>
       <v-card-actions class="justify-center">
-        <div class="d-flex flex-column align-center" style="gap: 16px; width: 100%;">
-          <v-btn class="custom-class" :to="{ name: 'Home' }" prepend-icon="mdi-chat-processing">
+        <div
+          class="d-flex flex-column align-center"
+          style="gap: 16px; width: 100%"
+        >
+          <v-btn
+            class="custom-class"
+            @click="handleChatStart"
+            prepend-icon="mdi-chat-processing"
+          >
             Démarrer le chat
           </v-btn>
-          <div class="d-flex align-center justify-center" style="gap: 24px; flex-wrap: wrap;">
-            <div class="d-flex align-center mt-4" style="gap: 8px;">
+          <div
+            class="d-flex align-center justify-center"
+            style="gap: 24px; flex-wrap: wrap"
+          >
+            <div class="d-flex align-center mt-4" style="gap: 8px">
               <v-icon icon="mdi-check" :size="20" color="primary" />
-              <span style="color: rgb(var(--v-theme-fade))">1 mois gratuit</span>
+              <span style="color: rgb(var(--v-theme-fade))"
+                >1 mois gratuit</span
+              >
             </div>
-            <div class="d-flex align-center mt-4" style="gap: 8px;">
+            <div class="d-flex align-center mt-4" style="gap: 8px">
               <v-icon icon="mdi-check" :size="20" color="primary" />
-              <span style="color: rgb(var(--v-theme-fade))">Sans engagement</span>
+              <span style="color: rgb(var(--v-theme-fade))"
+                >Sans engagement</span
+              >
             </div>
-            <div class="d-flex align-center mt-4" style="gap: 8px;">
+            <div class="d-flex align-center mt-4" style="gap: 8px">
               <v-icon icon="mdi-check" :size="20" color="primary" />
-              <span style="color: rgb(var(--v-theme-fade))">Questions illimitées</span>
+              <span style="color: rgb(var(--v-theme-fade))"
+                >Questions illimitées</span
+              >
             </div>
           </div>
         </div>
       </v-card-actions>
     </v-card>
 
-
-    <div class="d-flex justify-center py-12 px-10" style="gap: 40px; overflow-x: auto">
-        <div class="text-center animated-zoom-in" style="flex: 0 0 auto; width: 356px; background: rgb(var(--v-theme-surface)); border: 2px solid rgb(var(--v-theme-secondary)); border-radius: 12px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06); padding: 14px;">
+    <div
+      class="d-flex justify-center py-12 px-10"
+      style="gap: 40px; overflow-x: auto"
+    >
+      <div
+        class="text-center animated-zoom-in feature-card"
+        style="
+          flex: 0 0 auto;
+          width: 356px;
+          background: rgb(var(--v-theme-surface));
+          border: 2px solid rgb(var(--v-theme-secondary));
+          border-radius: 12px;
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+          padding: 14px;
+        "
+      >
         <h2 class="font-weight-medium mb-4">10k+</h2>
         <div class="text-body-1" style="color: rgb(var(--v-theme-fade))">
-          Questions traitées 
+          Questions traitées
         </div>
       </div>
-      <div class="text-center animated-zoom-in" style="flex: 0 0 auto; width: 356px; background: rgb(var(--v-theme-surface)); border: 2px solid rgb(var(--v-theme-secondary)); border-radius: 12px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06); padding: 14px;">
+      <div
+        class="text-center animated-zoom-in feature-card"
+        style="
+          flex: 0 0 auto;
+          width: 356px;
+          background: rgb(var(--v-theme-surface));
+          border: 2px solid rgb(var(--v-theme-secondary));
+          border-radius: 12px;
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+          padding: 14px;
+        "
+      >
         <h2 class="font-weight-medium mb-4">98%</h2>
         <div class="text-body-1" style="color: rgb(var(--v-theme-fade))">
-          Satisfaction client 
+          Satisfaction client
         </div>
       </div>
-      <div class="text-center animated-zoom-in" style="flex: 0 0 auto; width: 356px; background: rgb(var(--v-theme-surface)); border: 2px solid rgb(var(--v-theme-secondary)); border-radius: 12px; box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06); padding: 14px;">
+      <div
+        class="text-center animated-zoom-in feature-card"
+        style="
+          flex: 0 0 auto;
+          width: 356px;
+          background: rgb(var(--v-theme-surface));
+          border: 2px solid rgb(var(--v-theme-secondary));
+          border-radius: 12px;
+          box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+          padding: 14px;
+        "
+      >
         <h2 class="font-weight-medium mb-4">24/7</h2>
         <div class="text-body-1" style="color: rgb(var(--v-theme-fade))">
           Disponibilité
         </div>
       </div>
     </div>
-
-    
   </v-container>
 </template>
 
 <script setup lang="ts">
+import { ref } from "vue";
+import {useRouter} from "vue-router";
+
+const router = useRouter();
+
 const cards = [
   {
     icon: "mdi-scale-balance",
@@ -120,11 +194,50 @@ const cards = [
     vColor: "primary",
   },
 ];
+
+const handleChatStart = async () => {
+  const token = localStorage.getItem("token");
+  console.log("url :",  import.meta.env.VITE_API_BASE);
+  const API_BASE_URL =  import.meta.env.VITE_API_BASE || 'http://localhost:3000'
+
+  console.log("url :", API_BASE_URL);
+
+  if (token) {
+    try {
+      // Remplacez 'api/me' par l'URL de votre endpoint
+      const response = await fetch(`${API_BASE_URL}/api/me`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        // Rediriger vers la page de chat (Home)
+        router.push({ name: "Home" }); // Assurez-vous que 'Home' est le nom correct de votre route
+      } else {
+        // Si l'utilisateur n'est pas authentifié, rediriger vers la page de connexion
+        router.push({ name: "Login" });
+      }
+    } catch (error) {
+      console.error(
+        "Erreur lors de la récupération des informations utilisateur:",
+        error
+      );
+      // Rediriger vers la page de connexion en cas d'erreur
+      router.push({ name: "Login" });
+    }
+  } else {
+    // Si le token n'est pas présent, rediriger vers la page de connexion
+    router.push({ name: "Login" });
+  }
+};
 </script>
 
 <style scoped>
 .v-container {
-
   background-image: linear-gradient(
     to left,
     var(--v-theme-background),
@@ -160,7 +273,6 @@ const cards = [
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -176,33 +288,33 @@ const cards = [
   animation: fadeIn 0.5s ease-out; /* Durée et type de transition */
 }
 
-
 .custom-class {
-  width: 260px; 
-  height: 80px; 
-  border-radius: 15px; 
-  background-color: rgb(var(--v-theme-primary)); 
-  color: #ffffff; 
+  width: 260px;
+  height: 80px;
+  border-radius: 15px;
+  background-color: rgb(var(--v-theme-primary));
+  color: #ffffff;
   /* border: none; Supprimer les bordures par défaut */
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  font-size: 20px; 
-  transition: background-color 0.3s; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  transition: background-color 0.3s;
 
-  min-width: 200px; 
+  min-width: 200px;
   min-height: 70px;
   text-transform: none;
 }
 
 .custom-class:hover {
-  background-color:  rgb(var(--v-theme-secondary));
-  color:  rgb(var(--v-theme-primary)); 
+  background-color: rgb(var(--v-theme-secondary));
+  color: rgb(var(--v-theme-primary));
 }
- 
+
 /* Hover animation for feature cards */
 .feature-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease,
+    border-color 0.25s ease, background-color 0.25s ease;
   will-change: transform, box-shadow;
 }
 .feature-card:hover {
@@ -214,7 +326,6 @@ const cards = [
   transform: translateY(-2px) scale(0.999);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
 }
-
 
 @keyframes zoomIn {
   from {
@@ -231,4 +342,40 @@ const cards = [
   animation: zoomIn 0.5s ease-out; /* Durée et type de transition */
 }
 
+.feature-card {
+  flex: 0 1 calc(25% - 40px); /* Largeur par défaut des cartes */
+  margin: 8px; /* Espace autour des cartes */
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform, box-shadow;
+}
+
+.feature-card:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgb(var(--v-theme-primary));
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .feature-card {
+    flex: 0 1 calc(33% - 40px); /* 3 cartes par ligne */
+  }
+}
+
+@media (max-width: 900px) {
+  .feature-card {
+    flex: 0 1 calc(50% - 40px); /* 2 cartes par ligne */
+  }
+}
+
+@media (max-width: 600px) {
+  .feature-card {
+    flex: 0 1 100%; /* 1 carte par ligne */
+  }
+
+  .header-logo .logo-img {
+    width: 80px; /* Ajustement de la taille du logo */
+    height: 80px;
+  }
+}
 </style>

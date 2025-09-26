@@ -20,23 +20,7 @@
       </v-app-bar-title>
 
       <template v-slot:append>
-        <!-- <v-btn
-          text="Login"
-          variant="text"
-          :to="{ path: '/login' }"
-          style="
-            width: 80px;
-            height: 40px;
-            margin-left: 30px;
-            margin-top: 20px;
-            text-transform: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: rgb(var(--v-theme-color-text));
-            background-color: rgb(var(--v-theme-primary));
-          "
-        /> -->
+        
         <v-btn icon="mdi-magnify" class="ml-12 mt-6"></v-btn>
 
         <v-menu>
@@ -75,6 +59,7 @@ import { onMounted, ref, watch } from "vue";
 import MessageItem from "./MessageItem.vue";
 import ChatInput from "./ChatInput.vue";
 import { useChatStore } from "../stores/chat"; 
+import { getMessages } from "../services/api";
 
 const headerRef = ref<HTMLElement | null>(null);
 const isVisible = ref(false);
@@ -108,6 +93,23 @@ onMounted(() => {
     );
     observer.observe(headerRef.value);
   }
+  // Load existing messages once at app start
+  (async () => {
+    try {
+      // If we only have the initial system message, populate from backend
+      if (store.messages.length <= 1) {
+        const msgs = await getMessages();
+        msgs.forEach((m) => {
+          // Mark as saved to prevent resaving by MessageItem
+          m.saved = true;
+          store.addMessage(m);
+        });
+      }
+    } catch (e) {
+      // optional: set a store error
+      store.error = (e as any)?.message || "Impossible de charger les messages";
+    }
+  })();
 });
 </script>
 

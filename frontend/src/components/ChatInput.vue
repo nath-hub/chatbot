@@ -68,11 +68,8 @@ async function send() {
   loading.value = true;
   store.loading = true;
   try {
-    const resp = await sendChat(store.messages);
-    // attend un objet { assistant: "..." } ou messages mis à jour
-    const assistantContent =
-      resp.assistant || resp.text || JSON.stringify(resp);
-    store.addMessage({ role: "assistant", content: assistantContent, timestamp: Date.now() });
+    const { assistant } = await sendChat(store.messages);
+    store.addMessage({ role: "assistant", content: assistant, timestamp: Date.now() });
   } catch (err: any) {
     store.error = err?.message || "Erreur serveur";
   } finally {

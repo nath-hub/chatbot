@@ -13,6 +13,7 @@ import mysql from "mysql2/promise";
 const app = express();
 import jwt from "jsonwebtoken";
 import path from "path";
+const router = express.Router();
 
 const dbConfig = {
   host: process.env.DB_HOST, // L'hôte de la base de données
@@ -29,6 +30,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 
+// Mount API router base path
+app.use("/api", router);
+
 // Base de données simple en mémoire (remplacez par une vraie BDD)
 let users = [];
 
@@ -39,12 +43,8 @@ function generateOTP() {
 
 const OPENAI_KEY = process.env.OPENAI_API_KEY;
 if (!OPENAI_KEY) {
-  console.error("Missing OPENAI_API_KEY in env");
-  process.exit(1);
+  console.warn("OPENAI_API_KEY not set. Using OpenRouter only.");
 }
-
-console.log(process.env.USERNAME_GMAIL);
-console.log(process.env.PASSWORD);
 
 // Configurer nodemailer (exemple avec Gmail)
 const transporter = nodemailer.createTransport({
@@ -137,18 +137,22 @@ app.post("/api/register", async (req, res) => {
       result = insertResult;
     }
 
+    const [userRows] = await connection.execute(
+      "SELECT * FROM users WHERE id = ?",
+      [userId]
+    );
+    const user = userRows[0];
+
     // Envoyer OTP par email
     await transporter.sendMail({
       from: "no_reply@gmail.com",
       to: email,
       subject: "Votre code de validation",
-      html: getEmailTemplate(username, otp),
+      html: getEmailTemplate(user.username, otp),
     });
 
-    // Générer le token JWT
-    const token = jwt.sign({ userId: result.insertId, username: username, email: email }, JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    // Générer le token avec toutes les infos
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: "24h" });
 
     res.status(201).json({
       success: true,
@@ -211,9 +215,13 @@ app.post("/api/verify", async (req, res) => {
     );
 
     // Générer un JWT (exp 24h)
-    const token = jwt.sign({ id: user.id, username: user.username, email: user.email }, JWT_SECRET, {
-      expiresIn: "24h",
-    });
+    const token = jwt.sign(
+      { id: user.id, username: user.username, email: user.email },
+      JWT_SECRET,
+      {
+        expiresIn: "24h",
+      }
+    );
 
     res.json({
       success: true,
@@ -231,47 +239,123 @@ app.post("/api/verify", async (req, res) => {
   }
 });
 
-app.post("/api/chat", async (req, res) => {
+const LEGAL_KEYWORDS = [
+  "droit",
+  "loi",
+  "contrat",
+  "procès",
+  "tribunal",
+  "avocat",
+  "justice",
+  "juridique",
+  "litige",
+  "code civil",
+  "code pénal",
+  "constitution",
+  "arbitrage",
+  "jugement",
+  "recours",
+];
+
+// ✅ Sauvegarde message
+app.post("/messages", async (req, res) => {
+
+  const connection = await mysql.createConnection(dbConfig);
+
   try {
-    const { messages } = req.body; // expects array {role, content}
-    if (!messages) return res.status(400).json({ error: "messages required" });
+    const { role, content } = req.body;
+    await connection.execute("INSERT INTO messages (role, content) VALUES (?, ?)", [
+      role,
+      content,
+    ]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
-    // Transform to OpenAI format
-    const openaiMessages = messages.map((m) => ({
-      role:
-        m.role === "user"
-          ? "user"
-          : m.role === "assistant"
-          ? "assistant"
-          : "system",
-      content: m.content,
-    }));
+app.get("/messages", async (req, res) => {
 
-    // Example using Chat Completions (GPT-4/3.5)
-    const response = await axios.post(
-      "https://api.openai.com/v1/chat/completions",
+  const connection = await mysql.createConnection(dbConfig);
+
+  try { 
+    
+    const [rows] = await connection.execute("SELECT * FROM messages");
+    res.json(rows);
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+router.post("/chat", async (req, res) => {
+  try {
+    const { prompt } = req.body || {};
+    if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
+      return res.status(400).json({ error: "Prompt manquant" });
+    }
+
+    // Vérifier si la question est liée au droit
+    const lowerPrompt = prompt.toLowerCase();
+    const isLegal = LEGAL_KEYWORDS.some((keyword) =>
+      lowerPrompt.includes(keyword)
+    );
+
+    if (!isLegal) {
+      return res.json({
+        reply:
+          "⚖️ Je suis un assistant spécialisé en droit. Merci de poser uniquement des questions liées au domaine juridique.",
+      });
+    }
+
+    const API_KEY = process.env.OPEN_ROUTER_KEY;
+    if (!API_KEY) {
+      return res
+        .status(500)
+        .json({ error: "OPEN_ROUTER_KEY manquant dans l'environnement" });
+    }
+
+    const response = await fetch(
+      "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "gpt-4o-mini", // ou "gpt-4" / "gpt-3.5-turbo" selon ton accès
-        messages: openaiMessages,
-        temperature: 0.2,
-        max_tokens: 800,
-      },
-      {
+        method: "POST",
         headers: {
-          Authorization: `Bearer ${OPENAI_KEY}`,
           "Content-Type": "application/json",
+          Authorization: `Bearer ${API_KEY}`,
         },
+        body: JSON.stringify({
+          model: "x-ai/grok-4-fast:free",
+          messages: [
+            {
+              role: "system",
+              content:
+                "Tu es un assistant juridique. Réponds uniquement aux questions liées au droit. Si une question sort du domaine du droit, dis poliment que tu ne peux répondre qu’aux questions juridiques.",
+            },
+            { role: "user", content: prompt },
+          ],
+        }),
       }
     );
 
-    const assistantMsg = response.data.choices?.[0]?.message?.content || "";
-    return res.json({ assistant: assistantMsg, raw: response.data });
-  } catch (err) {
-    console.error(err?.response?.data || err.message);
-    return res.status(500).json({
-      error: "OpenAI request failed",
-      detail: err?.response?.data || err.message,
-    });
+    if (!response.ok) {
+      const errText = await response.text();
+      return res
+        .status(502)
+        .json({ error: "Echec appel OpenRouter", detail: errText });
+    }
+
+    const data = await response.json();
+    const reply = data?.choices?.[0]?.message?.content || "";
+    if (!reply) {
+      return res.status(502).json({ error: "Réponse vide d'OpenRouter" });
+    }
+    return res.json({ reply });
+  } catch (e) {
+    console.error("/api/chat error:", e);
+    return res
+      .status(500)
+      .json({ error: "Erreur serveur", detail: e?.message || e });
   }
 });
 
@@ -345,3 +429,5 @@ function getEmailTemplate(username, otp) {
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server listening on ${port}`));
+
+// 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

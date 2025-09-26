@@ -4,7 +4,7 @@
     class="d-flex align-center justify-center fill-height full-width"
     style="background: linear-gradient(135deg, #6a1b9a, #8e24aa)"
   >
-    <v-card class="pa-8" width="420" elevation="12" rounded="xl">
+    <v-card class="pa-8 card-responsive" elevation="12" rounded="xl">
       <!-- Titre -->
       <div class="text-center mb-6">
         <div class="header-logo">
@@ -57,17 +57,17 @@
         </v-btn>
       </v-form>
 
-      <p
-        v-if="message"
-        class="text-center mt-4 mb-4 text-body-2"
-        :class="{ 'text-green': success, 'text-red': !success }"
-      >
+        <v-alert
+          v-if="message"
+          :type="success ? 'success' : 'error'"
+          class="mt-4"
+        >
         {{ message }}
-      </p>
+        </v-alert>
 
       <!-- Lien inscription -->
       <div class="text-center">
-        <p class="text-body-2 text-grey-darken-1">
+        <p class="text-body-2 mt-4 text-grey-darken-1">
           En poursuivant, vous acceptez
           <a href="#" class="font-weight-bold purple--text"
             >la Politique de Confidentialité</a
@@ -137,6 +137,18 @@ const sendEmail = async () => {
   width: 24px;
   height: 24px;
   margin-right: 8px;
+}
+
+.card-responsive { 
+  width: 2%;
+ height: 50%; 
+  transform: scale(1.2);
+}
+
+@media (max-width: 900px) {
+  .card-responsive {
+    width: 80% !important; 
+  }
 }
 
 .v-btn.custom-class {

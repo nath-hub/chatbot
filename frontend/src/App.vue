@@ -103,8 +103,8 @@
             <v-list-item
               prepend-icon="mdi-seal"
               title="S'abonner"
-              value="account"
-              to="/account"
+              value="abonnement"
+              to="/abonnement"
               :active-color="rail ? 'primary' : 'primary'"
             >
               <template v-slot:title>
@@ -114,8 +114,8 @@
             <v-list-item
               prepend-icon="mdi-account-star"
               title="Profil"
-              value="users"
-              to="/users"
+              value="profil"
+              to="/profil"
               :active-color="rail ? 'primary' : 'primary'"
             >
               <template v-slot:title>

@@ -31,7 +31,7 @@ const vuetify = createVuetify({
           primary: "#6c2399ff", // violet
           secondary: "#e7e7e7",
           error: "#f44336",
-          "on-background": "#1f1f1f",
+          "on-background": "hsl(0, 0.00%, 100.00%)",
           "on-surface": "#1f1f1f",
           fade: "hsl(0, 0.00%, 42.00%)",
           black: "hsla(302, 78.40%, 7.30%, 0.98)",
@@ -47,7 +47,7 @@ const vuetify = createVuetify({
           primary: "hsl(268, 100.00%, 29.60%)", // violet clair
           secondary: "hsl(0, 0.00%, 24.30%)",
           error: "hsl(0, 0.00%, 98.40%)",
-          "on-background": "hsl(0, 0.00%, 98.40%)",
+          "on-background": "hsl(0, 0.00%, 0.00%)",
           "on-surface": "hsl(0, 0.00%, 98.40%)",
           fade: "hsl(280, 3.30%, 82.20%)",
           black: "hsla(302, 78.40%, 7.30%, 0.98)",

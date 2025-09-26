@@ -3,7 +3,7 @@
     class="d-flex justify-center align-center "
     style="height: 100vh; min-width: 100%; background-color: rgb(var(--v-theme-primary))"
   >
-    <v-card width="400" class="pa-6" elevation="12" rounded="xl">
+    <v-card class="pa-6 card-responsive" elevation="12" rounded="xl">
       <div class="text-center mb-6">
         <div class="header-logo">
           <img src="../assets/logo.jpg" alt="Logo" class="logo-img" />
@@ -38,9 +38,10 @@
 
 <script setup>
 import { ref } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import axios from "axios";
 
+const router = useRouter();
 const route = useRoute();
 const email = route.query.email || "";
 const otp = ref("");
@@ -103,6 +104,37 @@ const verifyOtp = async () => {
 .v-btn.custom-class:hover {
   background-color: rgb(var(--v-theme-secondary));
   color: rgb(var(--v-theme-primary));
+}
+ 
+
+.card-responsive {
+  width: 30%; /* Largeur par défaut pour les grands écrans */
+  margin: 16px auto; /* Centrage avec un peu d'espace autour */
+}
+
+@media (max-width: 1200px) {
+  .card-responsive {
+    transform: scale(1.5);
+    width: 50%; /* Largeur pour les écrans de taille moyenne */
+  }
+}
+
+@media (max-width: 900px) {
+  .card-responsive {
+    width: 30%; /* Largeur pour les petits écrans */
+    /* Vous pouvez ajouter padding ici si nécessaire */
+  }
+}
+
+@media (max-width: 600px) {
+  .card-responsive {
+    width: 20%; /* Largeur pour les très petits écrans */
+    /* Évitez le zoom permanent */ 
+    padding: 16px; /* Ajoutez du padding si nécessaire */
+     /* padding: 24px !important; */
+    /* margin: 8px auto; */
+    transform: scale(1.5);
+  }
 }
 
 .header-logo .logo-img {
