@@ -204,12 +204,14 @@ function toggleTheme() {
   theme.global.name.value = isDark.value ? "light" : "dark";
 }
 
+const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:3000'
+
 // Récupération du profil user avec le token
 onMounted(async () => {
   const token = localStorage.getItem("token");
   if (token) {
     try {
-      const res = await axios.get("http://localhost:3000/api/me", {
+      const res = await axios.get(`${API_BASE_URL}/api/me`, {
         headers: {
           Authorization: `Bearer ${token}`
         }

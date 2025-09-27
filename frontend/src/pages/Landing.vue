@@ -197,7 +197,7 @@ const cards = [
 
 const handleChatStart = async () => {
   const token = localStorage.getItem("token");
-  console.log("url :",  import.meta.env.VITE_API_BASE);
+
   const API_BASE_URL =  import.meta.env.VITE_API_BASE || 'http://localhost:3000'
 
   console.log("url :", API_BASE_URL);

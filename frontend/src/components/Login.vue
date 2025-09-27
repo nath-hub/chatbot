@@ -92,13 +92,15 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
+const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:3000'
+
 const sendEmail = async () => {
   console.log("Envoi des données:", {
     username: username.value,
     email: email.value,
   });
     try {
-    const res = await axios.post("http://localhost:3000/api/register", {
+    const res = await axios.post(`${API_BASE_URL}/api/register`, {
       username: username.value,
       email: email.value,
     });
