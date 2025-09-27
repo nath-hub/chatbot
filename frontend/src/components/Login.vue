@@ -92,7 +92,7 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 
-const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:3000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
 
 const sendEmail = async () => {
   console.log("Envoi des données:", {

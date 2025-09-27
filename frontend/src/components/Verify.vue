@@ -49,7 +49,7 @@ const message = ref("");
 const success = ref(false);
 const loading = ref(false);
 
-const API_BASE_URL = process.env.VUE_APP_API_URL || 'http://localhost:3000'
+const API_BASE_URL = import.meta.env.VITE_API_BASE || 'http://localhost:3000'
 
 const verifyOtp = async () => {
   loading.value = true;
