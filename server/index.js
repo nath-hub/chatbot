@@ -18,7 +18,7 @@ const router = express.Router();
 const dbConfig = {
   host: process.env.DB_HOST, // L'hôte de la base de données
   user: process.env.DB_USERNAME, // Votre nom d'utilisateur MySQL
-  password: "", // Votre mot de passe MySQL
+  password: process.env.DB_PASSWORD,
   database: process.env.DB_DATABASE, // Nom de votre base de données
 };
 
@@ -258,7 +258,7 @@ const LEGAL_KEYWORDS = [
 ];
 
 // ✅ Sauvegarde message
-app.post("/messages", async (req, res) => {
+app.post("/api/messages", async (req, res) => {
 
   const connection = await mysql.createConnection(dbConfig);
 
@@ -274,12 +274,12 @@ app.post("/messages", async (req, res) => {
   }
 });
 
-app.get("/messages", async (req, res) => {
+app.get("/api/messages", async (req, res) => {
 
   const connection = await mysql.createConnection(dbConfig);
 
   try { 
-    
+
     const [rows] = await connection.execute("SELECT * FROM messages");
     res.json(rows);
 
@@ -289,7 +289,7 @@ app.get("/messages", async (req, res) => {
 });
 
 
-router.post("/chat", async (req, res) => {
+router.post("/api/chat", async (req, res) => {
   try {
     const { prompt } = req.body || {};
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {

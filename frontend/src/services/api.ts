@@ -52,7 +52,7 @@ export async function getMessages(): Promise<ChatMessage[]> {
 
   return withFallback(
     () => fetcher("/api/messages"),
-    () => fetcher("/messages")
+    () => fetcher("/api/messages")
   );
 }
 
@@ -72,7 +72,7 @@ export async function saveMessage(msg: ChatMessage): Promise<{ success: boolean 
 
   return withFallback(
     () => poster("/api/messages"),
-    () => poster("/messages")
+    () => poster("/api/messages")
   );
 }
 
