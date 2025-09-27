@@ -4,7 +4,7 @@
     class="d-flex align-center justify-center fill-height full-width"
     style="background: linear-gradient(135deg, #6a1b9a, #8e24aa)"
   >
-    <v-card class="pa-8 card-responsive" elevation="12" rounded="xl">
+    <v-card class="pa-8 card-responsive" elevation="12" rounded="xl" max-width="500">
       <!-- Titre -->
       <div class="text-center mb-6">
         <div class="header-logo">
@@ -141,17 +141,6 @@ const sendEmail = async () => {
   margin-right: 8px;
 }
 
-.card-responsive { 
-  width: 2%;
- height: 50%; 
-  transform: scale(1.2);
-}
-
-@media (max-width: 900px) {
-  .card-responsive {
-    width: 80% !important; 
-  }
-}
 
 .v-btn.custom-class {
   width: 100%;
