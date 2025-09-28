@@ -13,6 +13,7 @@ import mysql from "mysql2/promise";
 const app = express();
 import jwt from "jsonwebtoken";
 import path from "path";
+import { type } from "os";
 const router = express.Router();
 
 const dbConfig = {
@@ -78,49 +79,39 @@ const authMiddleware = (req, res, next) => {
 app.get("/api/me", authMiddleware, (req, res) => {
   res.json({
     success: true,
-    user: {
-      id: req.user.id,
-      username: req.user.username,
-      email: req.user.email,
-    },
+    user: req.user
   });
 });
 
-// Route d'inscription
 app.post("/api/register", async (req, res) => {
-  const connection = await mysql.createConnection(dbConfig);
-
   try {
+    const connection = await mysql.createConnection(dbConfig);
     const userId = uuidv4();
     const { username, email } = req.body;
 
-    // Validation
     if (!username || !email) {
-      return res.status(400).json({
-        success: false,
-        message: "Tous les champs sont requis",
-      });
+      return res
+        .status(400)
+        .json({ success: false, message: "Tous les champs sont requis" });
     }
 
-    // Vérifier si l'utilisateur existe déjà
     const [existingUsers] = await connection.execute(
       "SELECT * FROM users WHERE email = ?",
       [email]
     );
 
     let result;
+    let user;
     const otp = generateOTP();
 
     if (existingUsers.length > 0) {
-      // Mettre à jour OTP si utilisateur existe déjà
       await connection.execute(
         "UPDATE users SET otp = ?, otp_expiry = ? WHERE email = ?",
-        [otp, new Date(Date.now() + 10 * 60000), email] // OTP valide 10 min
+        [otp, new Date(Date.now() + 10 * 60000), email]
       );
-
       result = { insertId: existingUsers[0].id };
+      user = existingUsers[0];
     } else {
-      // Créer l'utilisateur
       const [insertResult] = await connection.execute(
         "INSERT INTO users (id, username, email, otp, otp_expiry, is_active, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
         [
@@ -135,15 +126,31 @@ app.post("/api/register", async (req, res) => {
         ]
       );
       result = insertResult;
+      const [userRows] = await connection.execute(
+        "SELECT * FROM users WHERE id = ?",
+        [userId]
+      );
+      user = userRows[0];
     }
 
-    const [userRows] = await connection.execute(
-      "SELECT * FROM users WHERE id = ?",
-      [userId]
+     // Créer un abonnement pour l'utilisateur
+    const subscriptionId = uuidv4(); // Générer un nouvel ID d'abonnement
+    await connection.execute(
+      "INSERT INTO subscriber (id, user_id, type_abonnement, mode_paiement, date_debut, date_fin, statut, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [
+        subscriptionId,
+        user.id,
+        'free',
+        'monthly',
+        new Date(), 
+       new Date(new Date().setMonth(new Date().getMonth() + 1)), // Date de fin
+        'active',
+        new Date(),
+        new Date(),
+      ]
     );
-    const user = userRows[0];
 
-    // Envoyer OTP par email
+    // Si transporter n'est pas configuré correctement, ça peut planter
     await transporter.sendMail({
       from: "no_reply@gmail.com",
       to: email,
@@ -151,25 +158,19 @@ app.post("/api/register", async (req, res) => {
       html: getEmailTemplate(user.username, otp),
     });
 
-    // Générer le token avec toutes les infos
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: "24h" });
 
     res.status(201).json({
       success: true,
       message: "Inscription réussie",
       token,
-      user: {
-        id: result.insertId,
-        username,
-        email,
-      },
+      user: { id: result.insertId, username, email },
     });
-  } catch (error) {
-    console.error("Erreur lors de l'inscription:", error);
-    res.status(500).json({
-      success: false,
-      message: "Erreur serveur",
-    });
+  } catch (err) {
+    console.error("Erreur register:", err);
+    res
+      .status(500)
+      .json({ success: false, message: "Erreur serveur", error: err.message });
   }
 });
 
@@ -177,57 +178,53 @@ app.post("/api/verify", async (req, res) => {
   const connection = await mysql.createConnection(dbConfig);
 
   try {
-    const { email, otp } = req.body;
+  const { email, otp } = req.body;
 
-    if (!email || !otp) {
-      return res.status(400).json({
-        success: false,
-        message: "Email et code requis",
-      });
-    }
-
-    const [users] = await connection.execute(
-      "SELECT * FROM users WHERE email = ? AND otp = ?",
-      [email, otp]
-    );
-
-    if (users.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Code invalide",
-      });
-    }
-
-    const user = users[0];
-
-    // Vérifier expiration
-    if (new Date() > new Date(user.otp_expiry)) {
-      return res.status(400).json({
-        success: false,
-        message: "Code expiré",
-      });
-    }
-
-    // Activer compte
-    await connection.execute(
-      "UPDATE users SET is_active = 1, otp = NULL, otp_expiry = NULL, email_verified_at = ? WHERE email = ?",
-      [new Date(), email]
-    );
-
-    // Générer un JWT (exp 24h)
-    const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email },
-      JWT_SECRET,
-      {
-        expiresIn: "24h",
-      }
-    );
-
-    res.json({
-      success: true,
-      message: "Compte activé",
-      token,
+  if (!email || !otp) {
+    return res.status(400).json({
+      success: false,
+      message: "Email et code requis",
     });
+  }
+
+  const [users] = await connection.execute(
+    "SELECT * FROM users WHERE email = ? AND otp = ?",
+    [email, otp]
+  );
+
+  if (users.length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Code invalide",
+    });
+  }
+
+  const user = users[0];
+
+  // Vérifier expiration
+  if (new Date() > new Date(user.otp_expiry)) {
+    return res.status(400).json({
+      success: false,
+      message: "Code expiré",
+    });
+  }
+
+  // Activer compte
+  await connection.execute(
+    "UPDATE users SET is_active = 1, otp = NULL, otp_expiry = NULL, email_verified_at = ?, last_connection_date = ? WHERE email = ?",
+    [new Date(), new Date(), email]
+  );
+
+ 
+    // Générer JWT
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: "24h" });
+
+  res.json({
+    success: true,
+    message: "Compte activé",
+    id: user.id,
+    token,
+  });
   } catch (error) {
     console.error("Erreur verify:", error);
     res.status(500).json({
@@ -259,39 +256,63 @@ const LEGAL_KEYWORDS = [
 
 // ✅ Sauvegarde message
 app.post("/api/messages", async (req, res) => {
-
   const connection = await mysql.createConnection(dbConfig);
 
   try {
-    const { role, content } = req.body;
-    await connection.execute("INSERT INTO messages (role, content) VALUES (?, ?)", [
-      role,
-      content,
-    ]);
+    let { user_id, conversation_id, role, message, metadata } = req.body;
+
+     if (!conversation_id) {
+      conversation_id = uuidv4();
+    }
+
+    let id = uuidv4();
+
+    if (!user_id || !role || !message) {
+      return res
+        .status(400)
+        .json({ error: "Champs user_id, role et message sont requis" });
+    }
+
+    await connection.execute(
+      "INSERT INTO chat_messages (id, user_id, conversation_id, role, message, metadata) VALUES (?, ?, ?, ? ,?, ?)",
+      [id, user_id, conversation_id, role, message, JSON.stringify(metadata || {})]
+    );
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-app.get("/api/messages", async (req, res) => {
-
+app.get("/api/messages", authMiddleware, async (req, res) => {
   const connection = await mysql.createConnection(dbConfig);
 
-  try { 
+  try {
+    const { user_id } = req.user;
 
-    const [rows] = await connection.execute("SELECT * FROM messages");
-    res.json(rows);
-
+    const [rows] = await connection.execute(
+      "SELECT * FROM chat_messages WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
+      [user_id]
+    );
+    res.json(rows.reverse()); // pour avoir dans l’ordre chronologique
   } catch (err) {
     res.status(500).json({ error: err.message });
+  } finally {
+    await connection.end();
   }
 });
 
 
-router.post("/api/chat", async (req, res) => {
+app.post("/api/chat", authMiddleware,  async (req, res) => {
+   const connection = await mysql.createConnection(dbConfig);
   try {
     const { prompt } = req.body || {};
+    const user_id = req.user.id;
+
+    let { conversation_id } = req.body || {};
+    if (!conversation_id) {
+      conversation_id = uuidv4();
+    }
+
     if (!prompt || typeof prompt !== "string" || !prompt.trim()) {
       return res.status(400).json({ error: "Prompt manquant" });
     }
@@ -309,6 +330,18 @@ router.post("/api/chat", async (req, res) => {
       });
     }
 
+    // const [lastMessages] = await connection.execute(
+    //   "SELECT role, message FROM chat_messages WHERE user_id = ? ORDER BY created_at DESC LIMIT 5",
+    //   [user_id]
+    // );
+
+    // // Préparer le contexte
+    // const messages = [
+    //   { role: "system", content: "Tu es un assistant juridique." },
+    //   ...lastMessages.reverse(),
+    //   { role: "user", content: prompt },
+    // ];
+
     const API_KEY = process.env.OPEN_ROUTER_KEY;
     if (!API_KEY) {
       return res
@@ -316,6 +349,7 @@ router.post("/api/chat", async (req, res) => {
         .json({ error: "OPEN_ROUTER_KEY manquant dans l'environnement" });
     }
 
+  
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -338,6 +372,7 @@ router.post("/api/chat", async (req, res) => {
       }
     );
 
+     
     if (!response.ok) {
       const errText = await response.text();
       return res
@@ -347,6 +382,20 @@ router.post("/api/chat", async (req, res) => {
 
     const data = await response.json();
     const reply = data?.choices?.[0]?.message?.content || "";
+
+      // Sauvegarder le prompt de l’utilisateur
+    // await connection.execute(
+    //   "INSERT INTO chat_messages (user_id, conversation_id, role, content) VALUES (?, ?, ?, ?)",
+    //   [user_id, conversation_id, "user", prompt]
+    // );
+
+    // // Sauvegarder la réponse de GPT
+    // await connection.execute(
+    //   "INSERT INTO chat_messages (user_id, conversation_id, role, content) VALUES (?, ?, ?, ?)",
+    //   [user_id, conversation_id, "assistant", reply]
+    // );
+
+
     if (!reply) {
       return res.status(502).json({ error: "Réponse vide d'OpenRouter" });
     }
@@ -426,6 +475,90 @@ function getEmailTemplate(username, otp) {
   </html>
   `;
 }
+
+
+app.get("/api/users/:user_id", authMiddleware, async (req, res) => {
+  const connection = await mysql.createConnection(dbConfig);
+
+  try {
+    const { user_id } = req.params;
+    
+    if (!user_id) {
+      return res.status(400).json({ error: "ID utilisateur manquant" });
+    }
+    const [rows] = await connection.execute(
+      "SELECT id, username, otp, otp_expiry, is_active, email, google_id, theme, font_size, language, animation, avatar, biographie, type_abonnement, subscriber, email_verified_at, last_connection_date, created_at FROM users WHERE id = ?",
+      [user_id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+    
+    res.json({ success: true, user: rows[0] });
+  } catch (err) {
+    console.error("Erreur get user:", err);
+    res.status(500).json({ error: "Erreur serveur", detail: err.message });
+  } finally {
+    await connection.end();
+  }
+});
+
+
+app.put("/api/users/",authMiddleware, async (req, res) => {
+  const connection = await mysql.createConnection(dbConfig);
+
+  try {
+    const { id } = req.user.id;
+    const fields = req.body; // données envoyées depuis le front
+
+    if (!id || Object.keys(fields).length === 0) {
+      return res.status(400).json({ error: "ID manquant ou aucune donnée à mettre à jour" });
+    }
+
+    // Construction dynamique de la requête SQL
+    const allowedFields = [
+      "username", "otp", "otp_expiry", "is_active", "email", "google_id",
+      "theme", "font_size", "language", "animation", "avatar", "biographie",
+      "type_abonnement", "subscriber", "email_verified_at", "last_connection_date"
+    ];
+
+    const updates = [];
+    const values = [];
+
+    for (const key of Object.keys(fields)) {
+      if (allowedFields.includes(key)) {
+        updates.push(`${key} = ?`);
+        values.push(fields[key]);
+      }
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: "Aucun champ valide à mettre à jour" });
+    }
+
+    values.push(id); // dernier paramètre pour WHERE
+
+    const sql = `
+      UPDATE users 
+      SET ${updates.join(", ")}, updated_at = NOW()
+      WHERE id = ?`;
+
+    const [result] = await connection.execute(sql, values);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+
+    res.json({ success: true, message: "Utilisateur mis à jour avec succès" });
+  } catch (err) {
+    console.error("Erreur update user:", err);
+    res.status(500).json({ error: "Erreur serveur", detail: err.message });
+  } finally {
+    await connection.end();
+  }
+});
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`Server listening on ${port}`));

@@ -59,11 +59,14 @@ const verifyOtp = async () => {
       otp: otp.value,
     });
 
-    if (res.data.success) {
+    if (res.data.success == true) {
       success.value = true;
       message.value = "Vérification réussie ✅";
 
+      console.log(res.data);
+
       localStorage.setItem("token", res.data.token); 
+      localStorage.setItem("id", res.data.id);
 
       // ✅ rediriger vers la page OTP après 1s
       setTimeout(() => {

@@ -20,12 +20,15 @@
       </v-app-bar-title>
 
       <template v-slot:append>
-        
         <v-btn icon="mdi-magnify" class="ml-12 mt-6"></v-btn>
 
         <v-menu>
           <template v-slot:activator="{ props }">
-            <v-btn  class="ml-12 mt-6" icon="mdi-dots-vertical" v-bind="props"></v-btn>
+            <v-btn
+              class="ml-12 mt-6"
+              icon="mdi-dots-vertical"
+              v-bind="props"
+            ></v-btn>
           </template>
 
           <v-list>
@@ -55,17 +58,17 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, watch } from "vue"; 
+import { onMounted, ref, watch } from "vue";
 import MessageItem from "./MessageItem.vue";
 import ChatInput from "./ChatInput.vue";
-import { useChatStore } from "../stores/chat"; 
+import { useChatStore } from "../stores/chat";
 import { getMessages } from "../services/api";
 
 const headerRef = ref<HTMLElement | null>(null);
 const isVisible = ref(false);
 
 const store = useChatStore();
-const msgs = ref<HTMLElement | null>(null);
+const msgsRef  = ref<HTMLElement | null>(null);
 
 // scroll to bottom when new message (if you want)
 watch(
@@ -73,8 +76,8 @@ watch(
   () => {
     // scroll only if not desired? ici on scroll pour expérience chat
     setTimeout(() => {
-      msgs.value?.scrollTo({
-        top: msgs.value.scrollHeight,
+      msgsRef.value?.scrollTo({
+        top: msgsRef.value.scrollHeight,
         behavior: "smooth",
       });
     }, 50);
@@ -99,12 +102,18 @@ onMounted(() => {
       // If we only have the initial system message, populate from backend
       if (store.messages.length <= 1) {
         const msgs = await getMessages();
+        console.log(msgs);
         msgs.forEach((m) => {
           // Mark as saved to prevent resaving by MessageItem
           m.saved = true;
           store.addMessage(m);
         });
       }
+
+      // si le backend renvoie toujours le même conversation_id pour les messages :
+      // if (msgs.length > 0 && msgs[0].conversation_id) {
+      //   store.conversations(msgs[0].conversation_id);
+      // }
     } catch (e) {
       // optional: set a store error
       store.error = (e as any)?.message || "Impossible de charger les messages";
